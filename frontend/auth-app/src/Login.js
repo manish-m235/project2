@@ -21,6 +21,16 @@ function Login() {
     return true;
   };
 
+  const markAttendance = async (student_id) => {
+    try {
+      const res = await fetch(`http://localhost:8000/attendance/today/${student_id}`);
+      const data = await res.json();
+      console.log("Attendance status:", data.status);
+    } catch (err) {
+      console.error("Error marking attendance:", err);
+    }
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (!validateForm()) return;
@@ -29,7 +39,7 @@ function Login() {
     const formDetails = new URLSearchParams();
     formDetails.append('username', username);
     formDetails.append('password', password);
-    formDetails.append('role', role); // include role in request
+    formDetails.append('role', role);
 
     try {
       const response = await fetch('http://localhost:8000/token', {
@@ -46,10 +56,16 @@ function Login() {
         const data = await response.json();
         localStorage.setItem('token', data.access_token);
 
-        const decoded = jwtDecode(data.access_token);
-        localStorage.setItem('role', decoded.role);
+        const decoded = jwtDecode(data.access_token); // ✅ fixed import
+        localStorage.setItem('role', decoded.role || role); // fallback to selected role
+        localStorage.setItem('user_id', decoded.sub);
 
-        navigate('/protected');
+        // Auto-mark attendance if student
+        if ((decoded.role || role) === 'student') {
+          await markAttendance(decoded.sub);
+        }
+
+        navigate('/dashboard');
       } else {
         const errorData = await response.json();
         setError(errorData.detail || 'Login failed. Please try again.');

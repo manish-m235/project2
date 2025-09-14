@@ -3,8 +3,12 @@ import React from 'react';
 function App() {
   return (
     <div style={{ padding: '2rem' }}>
-      <h2>404 - Page Not Found</h2>
-      <p>The page you're looking for doesn't exist.</p>
+      <h2>Welcome to the Academic Portal</h2>
+      <nav>
+        <ul>
+          {/* Navigation links can be added here */}
+        </ul>
+      </nav>
     </div>
   );
 }

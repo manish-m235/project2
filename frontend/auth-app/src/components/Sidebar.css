@@ -1,0 +1,52 @@
+.sidebar {
+  width: 220px;
+  height: 100vh;
+  background-color: #2563eb;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  position: relative;
+}
+
+.sidebar h2 {
+  text-align: center;
+  margin-bottom: 2rem;
+  font-size: 1.5rem;
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  flex-grow: 1;
+}
+
+.sidebar li {
+  padding: 0.8rem 1rem;
+  cursor: pointer;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+  transition: 0.2s;
+}
+
+.sidebar li:hover {
+  background-color: #1e40af;
+}
+
+/* Logout icon at the bottom */
+.logout-icon {
+  font-size: 1.8rem;
+  background-color: #dc2626;
+  padding: 0.6rem;
+  border-radius: 50%;
+  text-align: center;
+  cursor: pointer;
+  margin-top: auto;
+  align-self: center;
+  transition: background 0.2s;
+}
+
+.logout-icon:hover {
+  background-color: #b91c1c;
+}
