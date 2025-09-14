@@ -1,52 +1,30 @@
 .sidebar {
   width: 220px;
-  height: 100vh;
-  background-color: #2563eb;
+  background-color: #1f2937; /* dark gray */
   color: white;
-  display: flex;
-  flex-direction: column;
+  min-height: 100vh;
   padding: 1rem;
-  position: relative;
+  box-sizing: border-box;
 }
 
-.sidebar h2 {
+.sidebar h3 {
   text-align: center;
-  margin-bottom: 2rem;
-  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
 }
 
 .sidebar ul {
   list-style: none;
   padding: 0;
-  margin: 0;
-  flex-grow: 1;
 }
 
-.sidebar li {
-  padding: 0.8rem 1rem;
-  cursor: pointer;
-  border-radius: 4px;
+.sidebar ul li {
+  padding: 0.75rem 1rem;
   margin-bottom: 0.5rem;
-  transition: 0.2s;
-}
-
-.sidebar li:hover {
-  background-color: #1e40af;
-}
-
-/* Logout icon at the bottom */
-.logout-icon {
-  font-size: 1.8rem;
-  background-color: #dc2626;
-  padding: 0.6rem;
-  border-radius: 50%;
-  text-align: center;
   cursor: pointer;
-  margin-top: auto;
-  align-self: center;
-  transition: background 0.2s;
+  border-radius: 5px;
+  transition: background 0.2s ease;
 }
 
-.logout-icon:hover {
-  background-color: #b91c1c;
+.sidebar ul li:hover {
+  background-color: #3b82f6; /* blue hover */
 }

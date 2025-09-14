@@ -5,9 +5,9 @@ function AssignmentUpload() {
   const [message, setMessage] = useState('');
   const student_id = localStorage.getItem('user_id');
 
-  const handleSubmit = async (e) => {
+  const handleUpload = async (e) => {
     e.preventDefault();
-    if (!file) return;
+    if (!file) return setMessage("Please select a file");
 
     const formData = new FormData();
     formData.append('file', file);
@@ -19,17 +19,18 @@ function AssignmentUpload() {
       });
 
       const data = await res.json();
-      setMessage(data.message || 'Upload complete');
+      if (res.ok) setMessage(data.message);
+      else setMessage(`❌ Failed to upload: ${data.detail || data.message}`);
     } catch (err) {
       console.error(err);
-      setMessage('Upload failed');
+      setMessage("❌ Failed to upload assignment");
     }
   };
 
   return (
-    <div className="upload-container" style={{ padding: '2rem' }}>
+    <div>
       <h2>📝 Submit Assignment</h2>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleUpload}>
         <input type="file" onChange={(e) => setFile(e.target.files[0])} />
         <button type="submit">Upload</button>
       </form>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Sidebar from './Sidebar'; // ✅ import sidebar
+import Sidebar from './Sidebar';
 import './MainDashboard.css';
 
 function MainDashboard() {
@@ -15,7 +15,7 @@ function MainDashboard() {
         .then(res => res.json())
         .then(setUserData)
         .catch(err => {
-          console.error("Error fetching attendance data:", err);
+          console.error(err);
           setUserData(null);
         });
     }
@@ -23,22 +23,13 @@ function MainDashboard() {
 
   return (
     <div style={{ display: 'flex' }}>
-      {/* Sidebar */}
       <Sidebar />
-
-      {/* Main Content */}
       <div className="dashboard-grid" style={{ flex: 1 }}>
         {userData && (
           <div className="dashboard-box">
             <h3>🕒 Attendance Summary</h3>
             <p><strong>Username:</strong> {userData.user.username}</p>
             <p><strong>Role:</strong> {userData.user.role}</p>
-            <p>
-              <strong>Enrolled Courses:</strong>{" "}
-              {userData.user.enrolled_courses.length > 0
-                ? userData.user.enrolled_courses.map(c => c.name).join(", ")
-                : "None"}
-            </p>
             <h4>📅 History:</h4>
             {userData.attendance.length > 0 ? (
               <ul style={{ maxHeight: '200px', overflowY: 'auto', paddingLeft: '1rem' }}>
@@ -71,7 +62,7 @@ function MainDashboard() {
         <div className="dashboard-box" onClick={() => navigate('/notices')}>
           <h3>📣 Notice Board</h3>
           {role === 'student' ? (
-            <p>View exam dates, schedules, and updates</p>
+            <p>View notices</p>
           ) : (
             <p>Post notices for students</p>
           )}

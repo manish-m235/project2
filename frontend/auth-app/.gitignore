@@ -8,6 +8,10 @@
 # testing
 /coverage
 
+__pycache__/
+*.pyc
+node_modules/
+
 # production
 /build
 
