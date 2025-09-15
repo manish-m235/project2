@@ -1,126 +1,76 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { jwtDecode } from 'jwt-decode';
-import './index.css';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import "./Auth.css"; // shared styling
 
 function Login() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [role, setRole] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-
   const navigate = useNavigate();
 
-  const validateForm = () => {
-    if (!username || !password || !role) {
-      setError('Username, password, and role are required.');
-      return false;
-    }
-    setError('');
-    return true;
-  };
-
-  const markAttendance = async (student_id) => {
-    try {
-      const res = await fetch(`http://localhost:8000/attendance/today/${student_id}`);
-      const data = await res.json();
-      console.log("Attendance status:", data.status);
-    } catch (err) {
-      console.error("Error marking attendance:", err);
-    }
-  };
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    if (!validateForm()) return;
-    setLoading(true);
-
-    const formDetails = new URLSearchParams();
-    formDetails.append('username', username);
-    formDetails.append('password', password);
-    formDetails.append('role', role);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const identifier = form.identifier.value;
+    const password = form.password.value;
 
     try {
-      const response = await fetch('http://localhost:8000/token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: formDetails,
+      // Your backend expects oauth form for /token, but if using custom /token you might adapt.
+      // If you use the /token OAuth2PasswordRequestForm from FastAPI, send urlencoded:
+      const response = await fetch("http://localhost:8000/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          username: identifier,
+          password: password,
+        }),
       });
-
-      setLoading(false);
 
       if (response.ok) {
         const data = await response.json();
-        localStorage.setItem('token', data.access_token);
-
-        const decoded = jwtDecode(data.access_token); // ✅ fixed import
-        localStorage.setItem('role', decoded.role || role); // fallback to selected role
-        localStorage.setItem('user_id', decoded.sub);
-
-        // Auto-mark attendance if student
-        if ((decoded.role || role) === 'student') {
-          await markAttendance(decoded.sub);
-        }
-
-        navigate('/dashboard');
+        localStorage.setItem("token", data.access_token || "");
+        localStorage.setItem("role", data.role || "");
+        localStorage.setItem("user_id", data.user_id || "");
+        navigate("/dashboard");
       } else {
-        const errorData = await response.json();
-        setError(errorData.detail || 'Login failed. Please try again.');
+        const err = await response.json().catch(() => ({}));
+        alert(err.detail || "Login failed");
       }
     } catch (error) {
-      setLoading(false);
-      setError('An error occurred. Please try again.');
+      console.error("Login error:", error);
+      alert("Login failed - server error");
     }
   };
 
   return (
-    <div className="login-container">
-      <form onSubmit={handleSubmit} className="login-form">
-        <h2>Login</h2>
+    <div className="auth-container">
+      <div className="auth-card">
+        <h1 className="portal-title">Academic Portal</h1>
 
-        {error && <div className="error-message">{error}</div>}
-
-        <div className="form-group">
-          <label>Username:</label>
+        <form onSubmit={handleSubmit}>
           <input
+            name="identifier"
             type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            placeholder="Username or Email"
+            required
           />
-        </div>
-
-        <div className="form-group">
-          <label>Password:</label>
           <input
+            name="password"
             type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Password"
+            required
           />
-        </div>
+          <button type="submit">Log In</button>
+        </form>
 
-        <div className="form-group">
-          <label>Select Role:</label>
-          <select
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            className="dropdown"
-          >
-            <option value="">-- Choose a role --</option>
-            <option value="student">Student</option>
-            <option value="ta">TA</option>
-            <option value="teacher">Teacher</option>
-            <option value="hod">HOD</option>
-            <option value="admin">Admin</option>
-          </select>
+        <div className="toggle-box">
+          <p>
+            Don’t have an account?{" "}
+            <span onClick={() => navigate("/register")} className="linkish">
+              Sign up
+            </span>
+          </p>
         </div>
+      </div>
 
-        <button type="submit" disabled={loading}>
-          {loading ? 'Logging in...' : 'Login'}
-        </button>
-      </form>
+      <footer className="auth-footer">© {new Date().getFullYear()} Academic Portal</footer>
     </div>
   );
 }

@@ -23,9 +23,11 @@ def get_user_attendance_summary(user_id: int, db: Session = Depends(get_db)):
     # Fetch enrolled courses
     enrollments = db.query(Enrollment).filter_by(student_id=user_id).all()
     enrolled_course_ids = [e.course_id for e in enrollments]
+
     courses = db.query(Course).filter(Course.id.in_(enrolled_course_ids)).all()
     enrolled_courses = [{"id": c.id, "name": c.name} for c in courses]
 
+    # Attendance history
     records = db.query(Attendance).filter_by(student_id=user_id).order_by(Attendance.date.desc()).all()
     attendance_history = [{"date": str(r.date), "status": r.status} for r in records]
 
@@ -34,7 +36,7 @@ def get_user_attendance_summary(user_id: int, db: Session = Depends(get_db)):
             "id": user.id,
             "username": user.username,
             "role": user.role,
-            "enrolled_courses": enrolled_courses  # ✅ new field
+            "enrolled_courses": enrolled_courses  # ✅ Now always included
         },
         "attendance": attendance_history
     }

@@ -1,119 +1,76 @@
-body {
-  font-family: Arial, sans-serif;
-  background-color: #f3f4f6;
-  margin: 0;
-  padding: 0;
-}
-
-.login-container {
+.auth-container {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
-  min-height: 100vh;
+  justify-content: center;
+  height: 100vh;
+  background-color: #fafafa;
 }
 
-.login-form {
-  background-color: #fff;
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  width: 100%;
-  max-width: 400px;
-}
-
-.login-form h2 {
+.auth-box {
+  width: 350px;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid #dbdbdb;
   text-align: center;
-  margin-bottom: 1.5rem;
-  color: #333;
+  border-radius: 6px;
 }
 
-.form-group {
-  margin-bottom: 1rem;
+.portal-title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 15px;
 }
 
-.form-group label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-  color: #555;
+.auth-form {
+  display: flex;
+  flex-direction: column;
 }
 
-.form-group input,
-.dropdown,
-textarea {
-  width: 100%;
-  padding: 0.6rem;
-  border: 1px solid #ccc;
+.auth-form input,
+.auth-form select {
+  margin: 6px 0;
+  padding: 10px;
+  border: 1px solid #dbdbdb;
   border-radius: 4px;
-  font-size: 1rem;
+  background-color: #fafafa;
+  font-size: 14px;
 }
 
-button[type="submit"] {
-  width: 100%;
-  padding: 0.75rem;
-  background-color: #2563eb;
-  color: white;
+.auth-button {
+  margin-top: 12px;
+  padding: 10px;
+  background-color: #0095f6;
+  color: #fff;
   font-weight: bold;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
 }
 
-button[type="submit"]:hover {
-  background-color: #1d4ed8;
-}
-
-button[disabled] {
-  background-color: #93c5fd;
-  cursor: not-allowed;
+.auth-button:hover {
+  background-color: #007acc;
 }
 
 .error-message {
-  background-color: #fee2e2;
-  color: #b91c1c;
-  padding: 0.75rem;
-  border-radius: 4px;
-  margin-bottom: 1rem;
-  font-size: 0.9rem;
+  color: red;
+  font-size: 14px;
+  margin-bottom: 8px;
 }
 
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 2rem;
-  padding: 2rem;
+.success-message {
+  color: green;
+  font-size: 14px;
+  margin-bottom: 8px;
 }
 
-.dashboard-box {
-  background: #f5f5f5;
-  border-radius: 8px;
-  padding: 1.5rem;
-  cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  transition: 0.2s ease;
+.switch-auth {
+  margin-top: 12px;
+  font-size: 14px;
 }
 
-.dashboard-box:hover {
-  background: #e0e0e0;
-}
-
-.course-box {
-  border: 1px solid #ccc;
-  padding: 1rem;
-  margin-bottom: 0.5rem;
-  border-radius: 6px;
-}
-
-.upload-container {
-  padding: 2rem;
-}
-
-.notice-board input,
-.notice-board textarea {
-  margin-bottom: 0.5rem;
-}
-
-.notice-board button {
-  margin-bottom: 1rem;
+.footer {
+  margin-top: 20px;
+  font-size: 12px;
+  color: #777;
 }

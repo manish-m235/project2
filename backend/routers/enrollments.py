@@ -1,45 +1,46 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from models import Enrollment, Course, User
+from models import Enrollment, User, Course
 from database import get_db
-from fastapi.security import OAuth2PasswordBearer
-from jose import jwt, JWTError
-import os
 
 router = APIRouter()
-SECRET_KEY = os.getenv("SECRET_KEY", "your_secret_key")
-ALGORITHM = "HS256"
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
 
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id = int(payload.get("sub"))
-        user = db.query(User).filter(User.id == user_id).first()
-        if not user:
-            raise HTTPException(status_code=401, detail="Invalid user")
-        return user
-    except JWTError as e:
-        raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
+# ✅ Get all enrollments
+@router.get("/")
+def get_all_enrollments(db: Session = Depends(get_db)):
+    enrollments = db.query(Enrollment).all()
+    return [
+        {
+            "id": e.id,
+            "student_id": e.student_id,
+            "course_id": e.course_id
+        }
+        for e in enrollments
+    ]
 
-@router.get("/", response_model=list[dict])
-def get_enrollments(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    if current_user.role.lower() != "student":
-        raise HTTPException(status_code=403, detail="Only students can view enrollments")
 
-    enrollments = db.query(Enrollment).filter_by(student_id=current_user.id).all()
-    return [{"course_id": e.course_id} for e in enrollments]
+# ✅ Enroll a student into a course (only 1 allowed)
+@router.post("/enroll/{course_id}")
+def enroll_student(course_id: int, student_id: int, db: Session = Depends(get_db)):
+    # Check if student exists
+    student = db.query(User).filter(User.id == student_id).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
 
-@router.post("/enroll/{course_id}", response_model=dict)
-def enroll_course(course_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    if current_user.role.lower() != "student":
-        raise HTTPException(status_code=403, detail="Only students can enroll")
+    # Check if course exists
+    course = db.query(Course).filter(Course.id == course_id).first()
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
 
-    existing = db.query(Enrollment).filter_by(student_id=current_user.id, course_id=course_id).first()
-    if existing:
-        return {"message": "Already enrolled"}
+    # Restrict: One student → One course only
+    existing_any = db.query(Enrollment).filter_by(student_id=student_id).first()
+    if existing_any:
+        raise HTTPException(status_code=400, detail="Student already enrolled in another course")
 
-    enrollment = Enrollment(student_id=current_user.id, course_id=course_id)
+    # Create enrollment
+    enrollment = Enrollment(student_id=student_id, course_id=course_id)
     db.add(enrollment)
     db.commit()
-    return {"message": "Enrolled"}
+    db.refresh(enrollment)
+
+    return {"message": f"Student {student.username} enrolled in {course.name}"}

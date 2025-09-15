@@ -8,6 +8,7 @@ import AssignmentUpload from './components/AssignmentUpload';
 import NoticeBoard from './components/NoticeBoard';
 import Attendance from './components/Attendance';
 import './index.css';
+import Register from './Register';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
@@ -19,6 +20,7 @@ root.render(
       <Route path="/assignments" element={<AssignmentUpload />} />
       <Route path="/notices" element={<NoticeBoard />} />
       <Route path="/attendance" element={<Attendance />} />
+      <Route path="/register" element={<Register />} />
     </Routes>
   </BrowserRouter>
 );
