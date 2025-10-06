@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "./Auth.css"; // ✅ styling like Instagram login/register
+import "./Auth.css";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -31,21 +31,23 @@ export default function Register() {
     }
 
     try {
-      const res = await fetch("http://localhost:8000/register", {
+      const res = await fetch("http://localhost:8000/users/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
 
+      const data = await res.json();
+
       if (!res.ok) {
-        const data = await res.json();
         setError(data.detail || "Registration failed");
         return;
       }
 
-      // ✅ success → redirect to login
+      // ✅ Registration successful → redirect to login
       navigate("/");
     } catch (err) {
+      console.error(err);
       setError("Something went wrong. Try again.");
     }
   };
@@ -105,6 +107,8 @@ export default function Register() {
             <option value="student">Student</option>
             <option value="teacher">Teacher</option>
             <option value="admin">Admin</option>
+            <option value="ta">TA</option>
+            <option value="hod">HOD</option>
           </select>
 
           {error && <p className="error">{error}</p>}

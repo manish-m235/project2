@@ -8,12 +8,14 @@
 # testing
 /coverage
 
+# Python cache files
 __pycache__/
 *.pyc
-node_modules/
 
-# production
-/build
+# Node / frontend stuff
+node_modules/
+build/
+
 
 # misc
 .DS_Store

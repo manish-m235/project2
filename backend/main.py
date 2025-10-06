@@ -1,18 +1,21 @@
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from jose import jwt, JWTError
+from sqlalchemy.orm import Session, joinedload
 from passlib.context import CryptContext
-from sqlalchemy.orm import Session
+from jose import jwt, JWTError
 from datetime import datetime, timedelta, timezone
-from models import User, Base
-from schemas import UserCreate, UserOut
-from database import SessionLocal, engine, get_db
-from routers import courses, attendance, assignments, notices, enrollments
+from models import Base, User, Attendance, Course
+from database import get_db, engine, SessionLocal
+from routers import users, courses, attendance, assignments, notices, enrollments
+from fastapi.staticfiles import StaticFiles
 
-app = FastAPI()
+# -------------------- App & DB --------------------
+app = FastAPI(title="Academic Portal Backend")
 Base.metadata.create_all(bind=engine)
+# Serve uploaded files so frontend can access images
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
+# -------------------- CORS ------------------------
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000"],
@@ -25,87 +28,95 @@ SECRET_KEY = "your_secret_key"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-# ---------- Auth Utilities ----------
-def get_user_by_identifier(db: Session, identifier: str):
-    """Find user by username OR email"""
-    return db.query(User).filter(
-        (User.username == identifier) | (User.email == identifier)
-    ).first()
+# -------------------- Ensure Default Admin -----------------
+# Creates a default admin once if none exists (no self-registration for admin)
+@app.on_event("startup")
+def ensure_default_admin():
+    db = SessionLocal()
+    try:
+        existing_admin = db.query(User).filter(User.role == "admin").first()
+        if not existing_admin:
+            default_username = "manish"
+            default_email = "manishmisrty235@gmail.com"
+            default_password = "12345"  
+            hashed = pwd_context.hash(default_password)
+            admin = User(
+                full_name="Manish Mistry       ",
+                username=default_username,
+                email=default_email,
+                hashed_password=hashed,
+                role="admin",
+                status="active",
+            )
+            db.add(admin)
+            db.commit()
+            print(
+                f"Default admin created. username={default_username} password={default_password}"
+            )
+    finally:
+        db.close()
 
-def authenticate_user(db: Session, identifier: str, password: str):
-    user = get_user_by_identifier(db, identifier)
-    if not user or not pwd_context.verify(password, user.hashed_password):
-        return False
-    return user
+# -------------------- Root -----------------------
+@app.get("/")
+def root():
+    return {"Backend is running 🚀"}
 
-def create_access_token(data: dict, expires_delta: timedelta | None = None):
-    to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=15))
-    to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+# -------------------- Auth Utilities -------------
+from fastapi.security import OAuth2PasswordBearer
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/login")
 
-# ---------- Register ----------
-@app.post("/register", response_model=UserOut)
-def register_user(user: UserCreate, db: Session = Depends(get_db)):
-    # ✅ Check confirm password
-    if user.password != user.confirm_password:
-        raise HTTPException(status_code=400, detail="Passwords do not match")
-
-    existing = db.query(User).filter(
-        (User.username == user.username) | (User.email == user.email)
-    ).first()
-    if existing:
-        raise HTTPException(status_code=400, detail="Username or email already taken")
-
-    hashed_password = pwd_context.hash(user.password)
-    db_user = User(
-        full_name=user.full_name,          # ✅ now included
-        username=user.username,
-        email=user.email,
-        hashed_password=hashed_password,
-        role=user.role
-    )
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
-    return db_user
-
-# ---------- Login ----------
-@app.post("/token")
-def login_for_access_token(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db)
-):
-    user = authenticate_user(db, form_data.username, form_data.password)
-    if not user:
-        raise HTTPException(status_code=401, detail="Incorrect username/email or password")
-
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"sub": str(user.id), "role": user.role},
-        expires_delta=access_token_expires
-    )
-    return {"access_token": access_token, "token_type": "bearer", "user_id": user.id, "role": user.role}
-
-# ---------- Verify Token ----------
-@app.get("/verify-token/{token}")
-def verify_token(token: str):
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        return {"user_id": payload.get("sub"), "role": payload.get("role")}
+        user_id = int(payload.get("sub"))
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=401, detail="User not found")
+        return user
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
-# ---------- Attendance All ----------
+def get_current_admin(current_user: User = Depends(get_current_user)):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return current_user
+
+# -------------------- Verify Token ----------------
+@app.get("/verify-token")
+def verify_token(current_user: User = Depends(get_current_user)):
+    return {"user_id": current_user.id, "role": current_user.role}
+
+# -------------------- Attendance All -------------
 @app.get("/attendance/all")
 def get_all_attendance(db: Session = Depends(get_db)):
-    from models import Attendance
-    records = db.query(Attendance).all()
-    return [{"student_id": r.student_id, "course_id": r.course_id, "date": str(r.date), "status": r.status} for r in records]
+    records = db.query(User).options(
+        joinedload(User.attendances).joinedload(Attendance.course)
+    ).all()
+    attendance_list = []
+    for user in records:
+        if user.attendances:
+            for att in user.attendances:
+                attendance_list.append({
+                    "student_name": user.full_name,
+                    "username": user.username,
+                    "course_name": att.course.name,
+                    "date": str(att.date),
+                    "status": att.status
+                })
+        else:
+            attendance_list.append({
+                "student_name": user.full_name,
+                "username": user.username,
+                "course_name": "-",
+                "date": "-",
+                "status": "absent"
+            })
+    return attendance_list
 
-# ---------- Include Routers ----------
+# -------------------- Include Routers ------------
+# Pass current_user or current_admin dependencies in routers if needed
+app.include_router(users.router, prefix="/users", tags=["Users"])
 app.include_router(courses.router, prefix="/courses", tags=["Courses"])
 app.include_router(attendance.router, prefix="/attendance", tags=["Attendance"])
 app.include_router(assignments.router, prefix="/assignments", tags=["Assignments"])

@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.eggs/
+
+# Environments
+.env
+.venv/
+venv/
+env/
+
+# Databases and uploads
+backend/test.db
+*.db
+uploads/
+
+# Node
+node_modules/
+frontend/auth-app/node_modules/
+frontend/auth-app/build/
+build/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Coverage
+coverage/
+
+# IDE
+.vscode/
+.idea/

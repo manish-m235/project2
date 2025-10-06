@@ -3,6 +3,7 @@ from database import Base
 from datetime import datetime
 from sqlalchemy.orm import relationship
 
+# -------------------
 # User Model
 # -------------------
 class User(Base):
@@ -14,12 +15,17 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     role = Column(String, nullable=False)
-    
-    courses = relationship("Course", back_populates="teacher")
-    attendances = relationship("Attendance", back_populates="student")
-    assignments = relationship("Assignment", back_populates="student")
-    notices = relationship("Notice", back_populates="posted_by_user")
+    status = Column(String, default="pending")  # "pending", "active", "rejected"
 
+    courses = relationship("Course", back_populates="teacher", cascade="all, delete-orphan")
+    attendances = relationship("Attendance", back_populates="student", cascade="all, delete-orphan")
+    assignments = relationship("Assignment", back_populates="student", cascade="all, delete-orphan")
+    notices = relationship("Notice", back_populates="posted_by_user", cascade="all, delete-orphan")
+
+
+# -------------------
+# Course Model
+# -------------------
 class Course(Base):
     __tablename__ = "courses"
 
@@ -29,14 +35,23 @@ class Course(Base):
     teacher_id = Column(Integer, ForeignKey("users.id"))
 
     teacher = relationship("User", back_populates="courses")
-    attendances = relationship("Attendance", back_populates="course")
+    attendances = relationship("Attendance", back_populates="course", cascade="all, delete-orphan")
 
+
+# -------------------
+# Enrollment Model
+# -------------------
 class Enrollment(Base):
     __tablename__ = "enrollments"
+
     id = Column(Integer, primary_key=True, index=True)
     student_id = Column(Integer, ForeignKey("users.id"))
     course_id = Column(Integer, ForeignKey("courses.id"))
 
+
+# -------------------
+# Attendance Model
+# -------------------
 class Attendance(Base):
     __tablename__ = "attendance"
 
@@ -50,13 +65,16 @@ class Attendance(Base):
     course = relationship("Course", back_populates="attendances")
 
 
+# -------------------
+# Assignment Model
+# -------------------
 class Assignment(Base):
     __tablename__ = "assignments"
 
     id = Column(Integer, primary_key=True, index=True)
     student_id = Column(Integer, ForeignKey("users.id"))
     filename = Column(String, nullable=False)   # ✅ added filename
-    filepath = Column(String, nullable=False)   # ✅ added filepath
+    filepath = Column(String, nullable=False)   # ✅ store web path like 'uploads/..'
     content = Column(Text, nullable=True)       # optional (if storing plain text instead of file)
     score = Column(Integer, nullable=True)
     comments = Column(Text, nullable=True)
@@ -65,6 +83,9 @@ class Assignment(Base):
     student = relationship("User", back_populates="assignments")
 
 
+# -------------------
+# Notice Model
+# -------------------
 class Notice(Base):
     __tablename__ = "notices"
 

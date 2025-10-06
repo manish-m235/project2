@@ -27,16 +27,14 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
 @router.get("/", response_model=list[dict])
 def get_notices(db: Session = Depends(get_db)):
     notices = db.query(Notice).order_by(Notice.id.desc()).all()
-    return [{"title": n.title, "message": n.message, "posted_by": n.posted_by} for n in notices]
+    return [{"id":n.id, "title": n.title, "message": n.message, "posted_by": n.posted_by} for n in notices]
 
 @router.post("/", response_model=dict)
 def post_notice(notice: NoticeCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     if not hasattr(current_user, "role") or current_user.role is None:
         raise HTTPException(status_code=403, detail="User role not found")
-
     if current_user.role.lower() == "student":
         raise HTTPException(status_code=403, detail="Students cannot post notices")
-
     new_notice = Notice(
         title=notice.title,
         message=notice.message,
@@ -45,5 +43,21 @@ def post_notice(notice: NoticeCreate, db: Session = Depends(get_db), current_use
     db.add(new_notice)
     db.commit()
     db.refresh(new_notice)
-
     return {"message": "Notice posted", "id": new_notice.id}
+
+@router.delete("/{notice_id}", response_model=dict)
+def delete_notice(
+    notice_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if not hasattr(current_user, "role") or current_user.role is None:
+        raise HTTPException(status_code=403, detail="User role not found")
+    if current_user.role.lower() == "student":
+        raise HTTPException(status_code=403, detail="Students cannot delete notices")
+    notice = db.query(Notice).filter(Notice.id == notice_id).first()
+    if not notice:
+        raise HTTPException(status_code=404, detail="Notice not found")
+    db.delete(notice)
+    db.commit()
+    return {"message": f"Notice {notice_id} deleted successfully"}

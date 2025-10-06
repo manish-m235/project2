@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 function Assignments() {
   const [assignments, setAssignments] = useState([]);
@@ -6,6 +7,8 @@ function Assignments() {
   const [score, setScore] = useState('');
   const role = localStorage.getItem('role');
   const user_id = localStorage.getItem('user_id');
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetch('http://localhost:8000/assignments/')
@@ -41,29 +44,29 @@ function Assignments() {
 
   return (
     <div style={{ padding: '2rem' }}>
+      <button
+        onClick={() => navigate("/dashboard")}
+        style={{ marginBottom: '1rem', padding: '8px 16px', backgroundColor: '#4a5568', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
+      >
+        ← Back to Dashboard
+      </button>
+
       <h2>📝 Assignments</h2>
       {role === 'student' ? (
         <>
-          <textarea
-            placeholder="Write your assignment..."
-            value={newAssignment}
-            onChange={(e) => setNewAssignment(e.target.value)}
-          />
-          <button onClick={submitAssignment}>Submit</button>
+          <textarea placeholder="Write your assignment..." value={newAssignment} onChange={(e) => setNewAssignment(e.target.value)} style={{ display: 'block', width: '100%', padding: '0.5rem', marginBottom: '0.5rem' }} />
+          <button onClick={submitAssignment} style={{ padding: '0.5rem 1rem', backgroundColor: '#2b6cb0', color: 'white', border: 'none', borderRadius: '5px' }}>Submit</button>
         </>
       ) : (
-        <ul>
+        <ul style={{ paddingLeft: '1rem', marginTop: '1rem' }}>
           {assignments.map(a => (
-            <li key={a.id}>
+            <li key={a.id} style={{ marginBottom: '1rem', border: '1px solid #ccc', padding: '0.5rem', borderRadius: '5px' }}>
               <p><strong>Student {a.student_id}</strong>: {a.content}</p>
-              {a.score ? (
-                <p>Score: {a.score} — {getLabel(a.score)}</p>
-              ) : (
+              {a.score ? <p>Score: {a.score} — {getLabel(a.score)}</p> :
                 <>
-                  <input type="number" placeholder="Score out of 10" onChange={e => setScore(e.target.value)} />
-                  <button onClick={() => gradeAssignment(a.id)}>Grade</button>
-                </>
-              )}
+                  <input type="number" placeholder="Score out of 10" onChange={e => setScore(e.target.value)} style={{ marginRight: '0.5rem', padding: '0.3rem' }} />
+                  <button onClick={() => gradeAssignment(a.id)} style={{ padding: '0.3rem 0.6rem', backgroundColor: '#2b6cb0', color: 'white', border: 'none', borderRadius: '5px' }}>Grade</button>
+                </>}
             </li>
           ))}
         </ul>
